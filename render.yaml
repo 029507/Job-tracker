@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: job-tracker-api
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install && npx prisma generate && npm run build
+    startCommand: cd backend && npx prisma migrate deploy && npm start
+    envVars:
+      - key: DATABASE_URL
+        scope: build
+        sync: false
+      - key: JWT_SECRET
+        scope: build
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+
+  - type: postgresql
+    name: job-tracker-db
+    plan: free
+    ipAllowList: []
+    version: 15
+
+databases:
+  - name: jobtracker
+    databaseName: jobtracker
+    user: jobtracker

@@ -1,0 +1,17 @@
+# Netlify Configuration
+
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[env.production]
+  REACT_APP_API_URL = "https://your-render-backend-url/api"
+
+[env.development]
+  REACT_APP_API_URL = "http://localhost:5000/api"
