@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Application Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app"></div>
+
+    <script>
+        // App State
+        let currentUser = null;
+        let applications = [
+            { id: 1, company: "Google", position: "Software Engineer", status: "INTERVIEW", appliedDate: "2026-08-20" },
+            { id: 2, company: "Microsoft", position: "Backend Developer", status: "APPLIED", appliedDate: "2026-08-21" },
+            { id: 3, company: "Apple", position: "Systems Engineer", status: "PHONE_SCREEN", appliedDate: "2026-08-22" },
+            { id: 4, company: "Amazon", position: "DevOps Engineer", status: "OFFER", appliedDate: "2026-08-23" },
+            { id: 5, company: "Meta", position: "Frontend Engineer", status: "REJECTED", appliedDate: "2026-08-24" }
+        ];
+
+        const statusColors = {
+            APPLIED: "bg-blue-100 text-blue-800",
+            PHONE_SCREEN: "bg-yellow-100 text-yellow-800",
+            INTERVIEW: "bg-green-100 text-green-800",
+            OFFER: "bg-purple-100 text-purple-800",
+            REJECTED: "bg-red-100 text-red-800",
+            WITHDRAWN: "bg-gray-100 text-gray-800"
+        };
+
+        // Calculate stats
+        function getStats() {
+            const total = applications.length;
+            const applied = applications.filter(a => a.status === "APPLIED").length;
+            const phoneScreen = applications.filter(a => a.status === "PHONE_SCREEN").length;
+            const interview = applications.filter(a => a.status === "INTERVIEW").length;
+            const offer = applications.filter(a => a.status === "OFFER").length;
+            const rejected = applications.filter(a => a.status === "REJECTED").length;
+
+            const responseRate = total > 0 ? Math.round(((total - applied) / total) * 100) : 0;
+            const successRate = total > 0 ? Math.round((offer / total) * 100) : 0;
+
+            return { total, applied, phoneScreen, interview, offer, rejected, responseRate, successRate };
+        }
+
+        // Login page
+        function showLogin() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md fade-in">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Job Tracker</h1>
+                        <p class="text-gray-600 text-center mb-8">Track and manage your job applications</p>
+
+                        <form onsubmit="handleLogin(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" value="john@example.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none" required>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                                <input type="password" value="password123" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none" required>
+                            </div>
+
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">
+                                Sign In
+                            </button>
+                        </form>
+
+                        <p class="text-center text-gray-600 mt-4 text-sm">
+                            Demo app - Use credentials above or try: john@example.com / password123
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            currentUser = { name: "John Doe", email: "john@example.com" };
+            showDashboard();
+        }
+
+        // Dashboard
+        function showDashboard() {
+            const stats = getStats();
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="min-h-screen bg-gray-50">
+                    ${renderNavbar()}
+
+                    <div class="max-w-7xl mx-auto p-6 space-y-8">
+                        <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-600 text-sm">Total Applications</p>
+                                <p class="text-3xl font-bold text-blue-600">${stats.total}</p>
+                            </div>
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-600 text-sm">Response Rate</p>
+                                <p class="text-3xl font-bold text-green-600">${stats.responseRate}%</p>
+                            </div>
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-600 text-sm">Interviews</p>
+                                <p class="text-3xl font-bold text-yellow-600">${stats.interview}</p>
+                            </div>
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <p class="text-gray-600 text-sm">Success Rate</p>
+                                <p class="text-3xl font-bold text-purple-600">${stats.successRate}%</p>
+                            </div>
+                        </div>
+
+                        <!-- Recent Apps -->
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Applications</h2>
+                            <div class="space-y-3">
+                                ${applications.slice(0, 3).map(app => `
+                                    <div class="flex justify-between items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div>
+                                            <p class="font-medium text-gray-900">${app.position}</p>
+                                            <p class="text-sm text-gray-600">${app.company}</p>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[app.status]}">${app.status}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button onclick="showApplications()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg">View All Applications</button>
+                            <button onclick="showAnalytics()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">View Analytics</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Applications List
+        function showApplications() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="min-h-screen bg-gray-50">
+                    ${renderNavbar()}
+
+                    <div class="max-w-7xl mx-auto p-6">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-6">Applications</h1>
+
+                        <div class="space-y-4">
+                            ${applications.map(a => `
+                                <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">${a.position}</h3>
+                                            <p class="text-gray-600">${a.company}</p>
+                                        </div>
+                                        <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[a.status]}">${a.status}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500">Applied: ${a.appliedDate}</p>
+                                    <button onclick="updateStatus(${a.id})" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg text-sm">Edit</button>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <button onclick="showDashboard()" class="mt-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Back to Dashboard</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Analytics
+        function showAnalytics() {
+            const stats = getStats();
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="min-h-screen bg-gray-50">
+                    ${renderNavbar()}
+
+                    <div class="max-w-7xl mx-auto p-6">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-6">Analytics</h1>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Key Metrics</h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Total Applications:</span>
+                                        <span class="font-semibold">${stats.total}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Response Rate:</span>
+                                        <span class="font-semibold text-green-600">${stats.responseRate}%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Success Rate:</span>
+                                        <span class="font-semibold text-purple-600">${stats.successRate}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-lg shadow p-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Breakdown</h3>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-sm">
+                                        <span>Applied</span>
+                                        <span class="font-semibold">${stats.applied}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Phone Screen</span>
+                                        <span class="font-semibold">${stats.phoneScreen}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Interview</span>
+                                        <span class="font-semibold">${stats.interview}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Offer</span>
+                                        <span class="font-semibold text-green-600">${stats.offer}</span>
+                                    </div>
+                                    <div class="flex justify-between text-sm">
+                                        <span>Rejected</span>
+                                        <span class="font-semibold">${stats.rejected}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="showDashboard()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-6 rounded-lg">Back to Dashboard</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateStatus(id) {
+            const statuses = ["APPLIED", "PHONE_SCREEN", "INTERVIEW", "OFFER", "REJECTED"];
+            const app = applications.find(a => a.id === id);
+            const currentIndex = statuses.indexOf(app.status);
+            app.status = statuses[(currentIndex + 1) % statuses.length];
+            showApplications();
+        }
+
+        // Navbar
+        function renderNavbar() {
+            return `
+                <nav class="bg-white shadow-md">
+                    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">JT</div>
+                            <span class="text-xl font-bold text-gray-900">Job Tracker</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <button onclick="showDashboard()" class="text-gray-700 hover:text-blue-600">Dashboard</button>
+                            <button onclick="showApplications()" class="text-gray-700 hover:text-blue-600">Applications</button>
+                            <button onclick="showAnalytics()" class="text-gray-700 hover:text-blue-600">Analytics</button>
+                            <button onclick="logout()" class="text-gray-700 hover:text-red-600">Logout</button>
+                        </div>
+                    </div>
+                </nav>
+            `;
+        }
+
+        function logout() {
+            currentUser = null;
+            showLogin();
+        }
+
+        // Start app
+        showLogin();
+    </script>
+</body>
+</html>
